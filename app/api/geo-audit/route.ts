@@ -2,29 +2,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { callLLM } from "@/lib/llm";
 import { geoAuditPrompt } from "@/lib/prompts";
 import type { GeoAuditApiResponse } from "@/lib/types";
-import { mapGeoAuditResponse, safeParseJSON } from "@/lib/utils";
+import { isValidUrl, mapGeoAuditResponse, safeParseJSON } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
       brand?: string;
-      category?: string;
+      brandUrl?: string;
       content?: string;
+      competitors?: string[];
     };
 
-    const { brand, category, content } = body;
+    const { brand, brandUrl, content, competitors } = body;
 
-    if (!brand?.trim() || !category?.trim() || !content?.trim()) {
+    if (!brand?.trim() || !brandUrl?.trim() || !content?.trim()) {
       return NextResponse.json(
-        { error: "brand, category, and content are required" },
+        { error: "brand, brandUrl, and content are required" },
+        { status: 400 },
+      );
+    }
+
+    if (!isValidUrl(brandUrl.trim())) {
+      return NextResponse.json(
+        { error: "brandUrl must be a valid http or https URL" },
         { status: 400 },
       );
     }
 
     const prompts = geoAuditPrompt({
       brand: brand.trim(),
-      category: category.trim(),
+      brandUrl: brandUrl.trim(),
       content: content.trim(),
+      competitors: competitors ?? [],
     });
     const raw = await callLLM(prompts);
     const parsed = safeParseJSON<GeoAuditApiResponse>(raw);

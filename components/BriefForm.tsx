@@ -1,24 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { Brief } from "@/lib/types";
+import { EXTERNAL_AUDITOR_ROLE, type Brief } from "@/lib/types";
+import { isValidUrl } from "@/lib/utils";
 
-export const ROLE_OPTIONS = [
-  "Social Media Manager",
-  "SEO / GEO Manager",
-  "CMO",
-  "Brand Manager",
-  "Digital Marketing Manager",
-  "Head of Growth",
-] as const;
+const SAMPLE_CONTENT = `Hoka running shoes are built for runners who want maximum cushioning without extra weight. Our Meta-Rocker geometry promotes a smooth heel-to-toe transition, and the extended heel design helps reduce impact on long runs. Popular models include the Clifton for everyday training and the Bondi for maximum cushioning.`;
 
 export const DEFAULT_BRIEF: Brief = {
   brand: "Hoka",
-  role: "SEO / GEO Manager",
-  category: "running shoes",
+  role: EXTERNAL_AUDITOR_ROLE,
+  brandUrl: "https://www.hoka.com",
   competitors: [],
-  channel: "ai",
-  productContent: "",
+  productContent: SAMPLE_CONTENT,
 };
 
 interface BriefFormProps {
@@ -27,34 +20,41 @@ interface BriefFormProps {
 
 export function BriefForm({ onSubmit }: BriefFormProps) {
   const [brand, setBrand] = useState(DEFAULT_BRIEF.brand);
-  const [role, setRole] = useState(DEFAULT_BRIEF.role);
-  const [category, setCategory] = useState(DEFAULT_BRIEF.category);
+  const [brandUrl, setBrandUrl] = useState(DEFAULT_BRIEF.brandUrl);
   const [competitorsText, setCompetitorsText] = useState("");
-  const [channel, setChannel] = useState<Brief["channel"]>(DEFAULT_BRIEF.channel);
   const [productContent, setProductContent] = useState(
-    DEFAULT_BRIEF.productContent ?? "",
+    DEFAULT_BRIEF.productContent,
   );
   const [error, setError] = useState("");
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    if (!brand.trim() || !role.trim() || !category.trim()) {
-      setError("Brand, role, and category are required.");
+    if (!brand.trim() || !brandUrl.trim()) {
+      setError("Brand name and brand URL are required.");
+      return;
+    }
+
+    if (!isValidUrl(brandUrl.trim())) {
+      setError("Enter a valid URL starting with http:// or https://.");
+      return;
+    }
+
+    if (!productContent.trim()) {
+      setError("Product or brand content is required for the GEO audit.");
       return;
     }
 
     setError("");
     onSubmit({
       brand: brand.trim(),
-      role: role.trim(),
-      category: category.trim(),
+      role: EXTERNAL_AUDITOR_ROLE,
+      brandUrl: brandUrl.trim(),
       competitors: competitorsText
         .split(",")
         .map((item) => item.trim())
         .filter(Boolean),
-      channel,
-      productContent: productContent.trim() || undefined,
+      productContent: productContent.trim(),
     });
   }
 
@@ -62,11 +62,11 @@ export function BriefForm({ onSubmit }: BriefFormProps) {
     <div className="mx-auto max-w-3xl px-4 py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-semibold text-slate-900">
-          AI Brand Positioning Report
+          AI Brand Positioning Audit
         </h1>
         <p className="mt-3 text-slate-600">
-          See how AI chatbots position your brand — visibility, associations,
-          competitive gaps, and GEO content optimisation.
+          Audit how well your brand&apos;s online content is structured for AI
+          discovery and citation.
         </p>
       </div>
 
@@ -89,31 +89,14 @@ export function BriefForm({ onSubmit }: BriefFormProps) {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
-            Your role
-          </label>
-          <select
-            value={role}
-            onChange={(event) => setRole(event.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
-          >
-            {ROLE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Product category
+            Brand URL
           </label>
           <input
-            type="text"
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
+            type="url"
+            value={brandUrl}
+            onChange={(event) => setBrandUrl(event.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
-            placeholder="e.g. running shoes"
+            placeholder="e.g. https://www.hoka.com"
           />
         </div>
 
@@ -131,42 +114,15 @@ export function BriefForm({ onSubmit }: BriefFormProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">
-            Discovery channel
-          </label>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <ChannelCard
-              title="AI Chatbots"
-              badge="LIVE"
-              badgeClass="bg-emerald-100 text-emerald-700"
-              selected={channel === "ai"}
-              onSelect={() => setChannel("ai")}
-            />
-            <ChannelCard
-              title="Social Media"
-              badge="SOON"
-              badgeClass="bg-slate-100 text-slate-500"
-              disabled
-            />
-            <ChannelCard
-              title="Search / SEO"
-              badge="SOON"
-              badgeClass="bg-slate-100 text-slate-500"
-              disabled
-            />
-          </div>
-        </div>
-
-        <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">
-            Paste product page or brand description for GEO audit (optional)
+            Product page or brand description
           </label>
           <textarea
             value={productContent}
             onChange={(event) => setProductContent(event.target.value)}
             rows={5}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
-            placeholder="Paste product page copy to unlock the GEO content audit..."
+            placeholder="Paste homepage, product page, or brand description copy..."
           />
         </div>
 
@@ -178,51 +134,9 @@ export function BriefForm({ onSubmit }: BriefFormProps) {
           type="submit"
           className="w-full rounded-lg bg-slate-900 px-4 py-3 text-sm font-medium text-white hover:bg-slate-800"
         >
-          Generate positioning report →
+          Run Audit
         </button>
       </form>
     </div>
-  );
-}
-
-interface ChannelCardProps {
-  title: string;
-  badge: string;
-  badgeClass: string;
-  selected?: boolean;
-  disabled?: boolean;
-  onSelect?: () => void;
-}
-
-function ChannelCard({
-  title,
-  badge,
-  badgeClass,
-  selected,
-  disabled,
-  onSelect,
-}: ChannelCardProps) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onSelect}
-      className={`rounded-lg border p-4 text-left transition ${
-        disabled
-          ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-70"
-          : selected
-            ? "border-slate-900 bg-slate-900 text-white"
-            : "border-slate-200 bg-white hover:border-slate-400"
-      }`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium">{title}</span>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeClass}`}
-        >
-          {badge}
-        </span>
-      </div>
-    </button>
   );
 }

@@ -1,37 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import type { Brief, GeoScore } from "@/lib/types";
+import type { GeoScore } from "@/lib/types";
 import { geoScoreColor } from "@/lib/utils";
 
 interface GeoAuditSectionProps {
-  brief: Brief;
-  geoAudit: GeoScore | null;
+  geoAudit: GeoScore;
 }
 
-export function GeoAuditSection({ brief, geoAudit }: GeoAuditSectionProps) {
+export function GeoAuditSection({ geoAudit }: GeoAuditSectionProps) {
   const [exampleOpen, setExampleOpen] = useState(false);
-  const hasContent = Boolean(brief.productContent?.trim());
-
-  if (!hasContent) {
-    return (
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <div className="border-b border-slate-800 bg-slate-900 px-6 py-4 text-white">
-          <h3 className="text-lg font-semibold">📊 GEO Content Audit</h3>
-        </div>
-        <div className="p-6">
-          <p className="text-sm text-slate-600">
-            Paste your product content in a new report to unlock GEO audit — the
-            content optimisation layer that Profound doesn&apos;t offer.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
-  if (!geoAudit) {
-    return null;
-  }
 
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">

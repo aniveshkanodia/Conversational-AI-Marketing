@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Brand Positioning",
+  title: "AI Brand Positioning Audit",
   description:
-    "Analyse how your brand is positioned inside AI chatbots — visibility, associations, competitive gaps, and GEO content audit.",
+    "Audit how well your brand's online content is structured for AI discovery and citation — scored against Princeton GEO research.",
 };
 
 export default function RootLayout({

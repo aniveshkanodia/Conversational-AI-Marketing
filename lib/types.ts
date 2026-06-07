@@ -1,22 +1,11 @@
+export const EXTERNAL_AUDITOR_ROLE = "External AI/GEO Consultant";
+
 export interface Brief {
   brand: string;
   role: string;
-  category: string;
+  brandUrl: string;
   competitors: string[];
-  channel: "ai" | "social" | "search";
-  productContent?: string;
-}
-
-export interface QueryResult {
-  query: string;
-  response: string;
-  brandMentions: BrandMention[];
-}
-
-export interface BrandMention {
-  brand: string;
-  position: number;
-  charIndex: number;
+  productContent: string;
 }
 
 export interface GeoScore {
@@ -40,19 +29,14 @@ export interface Recommendation {
 
 export interface AnalysisResults {
   brief: Brief;
-  queries: QueryResult[];
   competitors: string[];
-  geoAudit: GeoScore | null;
+  geoAudit: GeoScore;
   recommendations: Recommendation[];
   runAt: string;
 }
 
 export interface AnalysisState {
-  stage: "competitors" | "queries" | "analyzing" | "geo" | "done";
-  currentQuery: string;
-  completedQueries: number;
-  totalQueries: number;
-  queryList: string[];
+  stage: "competitors" | "geo" | "done";
 }
 
 export type AppView = "brief" | "loading" | "results";
@@ -63,17 +47,6 @@ export interface AppState {
   analysisState: AnalysisState | null;
   results: AnalysisResults | null;
   recommendationsLoading: boolean;
-}
-
-export interface Metrics {
-  visibilityRate: number;
-  averagePosition: number | null;
-  gapCount: number;
-}
-
-export interface GapQuery {
-  query: string;
-  competitorsAppeared: string[];
 }
 
 export interface GeoAuditApiResponse {

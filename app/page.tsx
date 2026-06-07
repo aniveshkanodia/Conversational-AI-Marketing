@@ -9,10 +9,8 @@ import type {
   AnalysisState,
   Brief,
   GeoScore,
-  QueryResult,
   Recommendation,
 } from "@/lib/types";
-import { computeGapQueries, computeMetrics, detectBrands } from "@/lib/utils";
 
 async function postJSON<T>(url: string, body: unknown): Promise<T> {
   const response = await fetch(url, {
@@ -47,34 +45,25 @@ export default function HomePage() {
   const fetchRecommendations = useCallback(
     async (
       currentBrief: Brief,
-      queries: QueryResult[],
       competitors: string[],
-      geoAudit: GeoScore | null,
+      geoAudit: GeoScore,
       onUpdate: (items: Recommendation[]) => void,
     ) => {
       setRecommendationsLoading(true);
 
       try {
-        const metrics = computeMetrics(queries, currentBrief.brand);
-        const gaps = computeGapQueries(
-          queries,
-          currentBrief.brand,
-          competitors,
-        );
-        const geoTopIssues =
-          geoAudit?.criteria
-            .filter((criterion) => criterion.score < 12)
-            .map((criterion) => criterion.issue) ?? [];
+        const geoTopIssues = geoAudit.criteria
+          .filter((criterion) => criterion.score < 12)
+          .map((criterion) => criterion.issue);
 
         const recommendations = await postJSON<Recommendation[]>(
           "/api/recommendations",
           {
             brand: currentBrief.brand,
             role: currentBrief.role,
-            category: currentBrief.category,
-            visibilityRate: metrics.visibilityRate,
-            gapQueries: gaps.map((gap) => gap.query),
-            geoScore: geoAudit?.overall ?? null,
+            brandUrl: currentBrief.brandUrl,
+            competitors,
+            geoScore: geoAudit.overall,
             geoTopIssues,
           },
         );
@@ -96,14 +85,7 @@ export default function HomePage() {
       setView("loading");
       setResults(null);
 
-      const initialState: AnalysisState = {
-        stage: "competitors",
-        currentQuery: "",
-        completedQueries: 0,
-        totalQueries: 10,
-        queryList: [],
-      };
-      setAnalysisState(initialState);
+      setAnalysisState({ stage: "competitors" });
 
       try {
         let competitors = submittedBrief.competitors;
@@ -111,91 +93,23 @@ export default function HomePage() {
         if (competitors.length === 0) {
           competitors = await postJSON<string[]>("/api/competitors", {
             brand: submittedBrief.brand,
-            category: submittedBrief.category,
+            brandUrl: submittedBrief.brandUrl,
           });
         }
 
-        setAnalysisState((prev) =>
-          prev ? { ...prev, stage: "queries" } : prev,
-        );
+        setAnalysisState({ stage: "geo" });
 
-        const queryList = await postJSON<string[]>("/api/queries", {
+        const geoAudit = await postJSON<GeoScore>("/api/geo-audit", {
           brand: submittedBrief.brand,
-          category: submittedBrief.category,
+          brandUrl: submittedBrief.brandUrl,
+          content: submittedBrief.productContent,
+          competitors,
         });
 
-        setAnalysisState((prev) =>
-          prev
-            ? {
-                ...prev,
-                stage: "analyzing",
-                queryList,
-                totalQueries: queryList.length,
-              }
-            : prev,
-        );
-
-        const brandsToTrack = [submittedBrief.brand, ...competitors];
-        const queryResults: QueryResult[] = [];
-
-        for (let index = 0; index < queryList.length; index += 1) {
-          const query = queryList[index];
-
-          setAnalysisState((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  currentQuery: query,
-                  completedQueries: index,
-                }
-              : prev,
-          );
-
-          const { response } = await postJSON<{ response: string }>(
-            "/api/query",
-            {
-              query,
-              category: submittedBrief.category,
-            },
-          );
-
-          queryResults.push({
-            query,
-            response,
-            brandMentions: detectBrands(response, brandsToTrack),
-          });
-
-          setAnalysisState((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  completedQueries: index + 1,
-                }
-              : prev,
-          );
-        }
-
-        let geoAudit: GeoScore | null = null;
-
-        if (submittedBrief.productContent?.trim()) {
-          setAnalysisState((prev) =>
-            prev ? { ...prev, stage: "geo", currentQuery: "" } : prev,
-          );
-
-          geoAudit = await postJSON<GeoScore>("/api/geo-audit", {
-            brand: submittedBrief.brand,
-            category: submittedBrief.category,
-            content: submittedBrief.productContent,
-          });
-        }
-
-        setAnalysisState((prev) =>
-          prev ? { ...prev, stage: "done", currentQuery: "" } : prev,
-        );
+        setAnalysisState({ stage: "done" });
 
         const baseResults: AnalysisResults = {
           brief: submittedBrief,
-          queries: queryResults,
           competitors,
           geoAudit,
           recommendations: [],
@@ -207,7 +121,6 @@ export default function HomePage() {
 
         void fetchRecommendations(
           submittedBrief,
-          queryResults,
           competitors,
           geoAudit,
           (recommendations) => {

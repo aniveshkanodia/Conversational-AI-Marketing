@@ -6,7 +6,9 @@ Instructions for any AI agent working on this codebase.
 
 ## What This Project Is
 
-A Next.js web app that analyses how a brand is positioned inside AI chatbots. It runs a brief-driven analysis — brand, category, competitors, role — fires 10 consumer queries at Claude, and returns a four-section results dashboard: visibility, associations, competitive gaps, and a GEO content audit. The GEO audit is the core differentiator: it scores the brand's product content against the Princeton GEO paper criteria (KDD '24) and outputs specific content recommendations.
+A Next.js web app that audits how well a brand's online content is structured for AI discovery and citation. Users submit a brief — brand, category, competitors (auto-detected if blank), and pasted product/brand copy — and receive a GEO readiness score grounded in the Princeton GEO paper (KDD '24), criterion-level breakdown, content fixes, and role-aware recommendations.
+
+This is the **content optimisation layer**, not AI visibility monitoring. Competitor auto-detect provides competitive context for the audit; there is no synthetic query loop or visibility metrics.
 
 **Source of truth for all feature decisions:** `spec.md`  
 **Track all work in:** `progress.md` (format defined below)
@@ -18,23 +20,23 @@ A Next.js web app that analyses how a brand is positioned inside AI chatbots. It
 **1. API key never reaches the client.**  
 `ANTHROPIC_API_KEY` lives in `.env.local` only. All Claude calls go through Next.js API routes in `app/api/`. Never import the Anthropic SDK or reference the key in any component or `lib/` file.
 
-**2. One query per API route call.**  
-`/api/query` handles a single consumer query and returns a single response. The client loops 10 times and calls it once per query. Do not batch all 10 into one API route — Vercel free tier has a 10s function timeout and batching will break it.
-
-**3. All state in React useState. No persistence.**  
+**2. All state in React useState. No persistence.**  
 No localStorage, no sessionStorage, no database, no cookies. This is a stateless demo. If the page refreshes, state resets. That is intentional.
 
-**4. Tailwind only for styling.**  
+**3. Tailwind only for styling.**  
 No shadcn, no MUI, no Radix, no Chakra, no other component libraries. Tailwind utility classes only. If a UI pattern is complex, build it manually.
 
-**5. TypeScript throughout.**  
+**4. TypeScript throughout.**  
 No `any` types. All shared types live in `lib/types.ts`. API routes and components import from there — no inline type definitions for shared shapes.
 
-**6. All prompts in `lib/prompts.ts`.**  
+**5. All prompts in `lib/prompts.ts`.**  
 No prompt strings hardcoded inside route files. Every system prompt and user prompt is an exported function in `lib/prompts.ts`. Route files call the function and pass the result to the API. This makes prompt iteration fast without touching route logic.
 
-**7. Follow the file structure in spec.md exactly.**  
+**6. Follow the file structure in spec.md exactly.**  
 Do not invent new directories or move files to different locations than specified. The structure exists for a reason and the spec is the contract.
+
+**7. Product content is required.**  
+The GEO audit is the core product. `productContent` must be provided in the brief — do not make it optional or add visibility/query features as a substitute.
 
 ---
 
@@ -45,23 +47,18 @@ Work in this sequence. Do not skip ahead — later components depend on earlier 
 ```
 1.  Project scaffold         next.js init, tailwind, tsconfig
 2.  lib/types.ts             all shared interfaces
-3.  lib/prompts.ts           all prompt template functions (can be stubs initially)
-4.  lib/utils.ts             detectBrands, extractSnippet, computeMetrics
+3.  lib/prompts.ts           all prompt template functions
+4.  lib/utils.ts             safeParseJSON, GEO score helpers
 5.  /api/competitors         auto-detect competitors
-6.  /api/queries             generate 10 consumer queries
-7.  /api/query               single query → LLM response
-8.  /api/geo-audit           GEO content audit → score + recommendations
-9.  /api/recommendations     role-specific recommendations
-10. BriefForm.tsx            step 1 UI
-11. LoadingScreen.tsx        step 2 UI with stage messages and query list
-12. VisibilitySection.tsx    results section 1
-13. AssociationsSection.tsx  results section 2
-14. GapsSection.tsx          results section 3
-15. GeoAuditSection.tsx      results section 4 — the differentiator
-16. RecommendationsSection.tsx results section 5
-17. ResultsDashboard.tsx     wraps all sections + metric cards + brief bar
-18. app/page.tsx             main state orchestration, view switching
-19. README.md                product brief, setup, deploy, architecture
+6.  /api/geo-audit           GEO content audit → score + recommendations
+7.  /api/recommendations     role-specific recommendations
+8.  BriefForm.tsx            step 1 UI
+9.  LoadingScreen.tsx        step 2 UI with stage messages
+10. GeoAuditSection.tsx      results section 1 — the differentiator
+11. RecommendationsSection.tsx results section 2
+12. ResultsDashboard.tsx     wrapper + metric cards + brief bar
+13. app/page.tsx             main state orchestration, view switching
+14. README.md                product brief, setup, deploy, architecture
 ```
 
 Update `progress.md` after completing each numbered item.
@@ -84,10 +81,10 @@ Last updated: [date and time]
 - [x] 2. lib/types.ts — all interfaces defined
 
 ## In Progress
-- [ ] 3. lib/prompts.ts — writing prompt templates for competitors and queries routes
+- [ ] 3. lib/prompts.ts — writing prompt templates for competitors and geo-audit routes
 
 ## Blocked
-- [ ] 8. /api/geo-audit — BLOCKED: need to confirm JSON parsing strategy for malformed Claude responses before implementing
+- [ ] 6. /api/geo-audit — BLOCKED: need to confirm JSON parsing strategy for malformed Claude responses before implementing
 
 ## Next Up
 - [ ] 4. lib/utils.ts
@@ -124,7 +121,7 @@ Last updated: [date and time]
 **Prompts**
 
 - Each prompt function takes typed parameters and returns `{ system: string, user: string }`
-- Function names match the route: `competitorsPrompt()`, `queriesPrompt()`, `queryPrompt()`, `geoAuditPrompt()`, `recommendationsPrompt()`
+- Function names match the route: `competitorsPrompt()`, `geoAuditPrompt()`, `recommendationsPrompt()`
 
 **Error handling**
 
@@ -137,7 +134,8 @@ Last updated: [date and time]
 ## Environment
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...   # required — get from Anthropic console
+ANTHROPIC_API_KEY=sk-ant-...   # required for production — get from Anthropic console
+LLM_PROVIDER=anthropic         # or ollama for local dev
 ```
 
 For local dev: copy `.env.example` to `.env.local` and add the key.  
@@ -151,10 +149,12 @@ Do not implement any of the following — they are explicitly out of scope:
 
 - User authentication or sessions
 - Report saving, history, or sharing links
-- GPT-4 or Gemini API calls (design the UI slots but leave them unpowered)
+- AI visibility monitoring or synthetic query probes (Profound's domain)
+- GPT-4 or Gemini API calls
 - PDF or CSV export
 - Social media or SEO channel analysis (show as "coming soon" in UI only)
 - Any database or persistent storage
+- URL crawling (paste content only)
 - GEO-bench HuggingFace dataset integration (noted in spec as a future improvement — defer)
 
 If anything in these categories seems necessary to make a feature work, stop and flag it rather than implementing a workaround.

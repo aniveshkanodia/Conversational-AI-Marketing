@@ -14,7 +14,7 @@ export function RecommendationsSection({
       <div className="border-b border-slate-800 bg-slate-900 px-6 py-4 text-white">
         <h3 className="text-lg font-semibold">🎯 Recommendations</h3>
         <p className="mt-1 text-sm text-slate-400">
-          Role-specific actions to improve AI chatbot visibility.
+          Actionable findings from an external AI/GEO audit.
         </p>
       </div>
 

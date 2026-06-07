@@ -1,14 +1,16 @@
-# AI Brand Positioning
+# GEO Brand Positioning Audit
 
-A web tool that shows marketing professionals how their brand is positioned inside AI chatbots — visibility, associations, competitive gaps, and GEO content recommendations grounded in the Princeton GEO paper (KDD '24).
+A web tool that audits how well a brand's online content is structured for AI discovery and citation — scored against Princeton GEO research (KDD '24).
 
 Built as a Profound AI Strategist application demo.
 
 ## What it does
 
-1. **Brief** — Enter brand, category, role, optional competitors and product content
-2. **Analysis** — Generates 10 consumer queries, runs them through an LLM, detects brand mentions
-3. **Results** — Visibility table, associations, competitive gaps, optional GEO audit, role-specific recommendations
+1. **Brief** — Enter brand, brand URL, optional competitors, and pasted product/brand content
+2. **Analysis** — Auto-detects competitors (if needed), runs GEO content audit against five Princeton criteria
+3. **Results** — GEO readiness score, criterion breakdown, top fixes, optimised example, and role-aware recommendations
+
+This is the **content optimisation layer** — not AI visibility monitoring. Competitor auto-detect provides context; visibility tracking requires products like Profound.
 
 ## Setup
 
@@ -57,8 +59,8 @@ ANTHROPIC_MODEL=claude-sonnet-4-20250514
 - **Next.js 14** App Router — single page, React `useState` only (no persistence)
 - **API routes** — all LLM calls server-side via `lib/llm.ts`
 - **Prompts** — centralised in `lib/prompts.ts`
-- **Query loop** — client calls `/api/query` once per query (Vercel 10s timeout safe)
-- **Recommendations** — fetched after results display (non-blocking)
+- **Analysis flow** — competitors → GEO audit → async recommendations
+- **Competitors** — auto-detected via `/api/competitors` when not provided
 
 See `project-notes.md` for deployment and UX decisions.
 

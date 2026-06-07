@@ -1,25 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callLLM } from "@/lib/llm";
 import { competitorsPrompt } from "@/lib/prompts";
-import { safeParseJSON } from "@/lib/utils";
+import { isValidUrl, safeParseJSON } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
       brand?: string;
-      category?: string;
+      brandUrl?: string;
     };
 
-    const { brand, category } = body;
+    const { brand, brandUrl } = body;
 
-    if (!brand?.trim() || !category?.trim()) {
+    if (!brand?.trim() || !brandUrl?.trim()) {
       return NextResponse.json(
-        { error: "brand and category are required" },
+        { error: "brand and brandUrl are required" },
         { status: 400 },
       );
     }
 
-    const prompts = competitorsPrompt({ brand: brand.trim(), category: category.trim() });
+    if (!isValidUrl(brandUrl.trim())) {
+      return NextResponse.json(
+        { error: "brandUrl must be a valid http or https URL" },
+        { status: 400 },
+      );
+    }
+
+    const prompts = competitorsPrompt({
+      brand: brand.trim(),
+      brandUrl: brandUrl.trim(),
+    });
     const raw = await callLLM(prompts);
     const parsed = safeParseJSON<string[]>(raw);
 

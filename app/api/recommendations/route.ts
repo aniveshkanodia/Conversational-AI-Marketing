@@ -2,38 +2,36 @@ import { NextRequest, NextResponse } from "next/server";
 import { callLLM } from "@/lib/llm";
 import { recommendationsPrompt } from "@/lib/prompts";
 import type { Recommendation } from "@/lib/types";
-import { safeParseJSON } from "@/lib/utils";
+import { isValidUrl, safeParseJSON } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as {
       brand?: string;
       role?: string;
-      category?: string;
-      visibilityRate?: number;
-      gapQueries?: string[];
-      geoScore?: number | null;
+      brandUrl?: string;
+      competitors?: string[];
+      geoScore?: number;
       geoTopIssues?: string[];
     };
 
-    const {
-      brand,
-      role,
-      category,
-      visibilityRate,
-      gapQueries,
-      geoScore,
-      geoTopIssues,
-    } = body;
+    const { brand, role, brandUrl, competitors, geoScore, geoTopIssues } = body;
 
     if (
       !brand?.trim() ||
       !role?.trim() ||
-      !category?.trim() ||
-      typeof visibilityRate !== "number"
+      !brandUrl?.trim() ||
+      typeof geoScore !== "number"
     ) {
       return NextResponse.json(
-        { error: "brand, role, category, and visibilityRate are required" },
+        { error: "brand, role, brandUrl, and geoScore are required" },
+        { status: 400 },
+      );
+    }
+
+    if (!isValidUrl(brandUrl.trim())) {
+      return NextResponse.json(
+        { error: "brandUrl must be a valid http or https URL" },
         { status: 400 },
       );
     }
@@ -41,10 +39,9 @@ export async function POST(request: NextRequest) {
     const prompts = recommendationsPrompt({
       brand: brand.trim(),
       role: role.trim(),
-      category: category.trim(),
-      visibilityRate,
-      gapQueries: gapQueries ?? [],
-      geoScore: geoScore ?? null,
+      brandUrl: brandUrl.trim(),
+      competitors: competitors ?? [],
+      geoScore,
       geoTopIssues: geoTopIssues ?? [],
     });
 

@@ -1,79 +1,57 @@
 interface CompetitorsPromptParams {
   brand: string;
-  category: string;
-}
-
-interface QueriesPromptParams {
-  brand: string;
-  category: string;
-}
-
-interface QueryPromptParams {
-  query: string;
-  category: string;
+  brandUrl: string;
 }
 
 interface GeoAuditPromptParams {
   brand: string;
-  category: string;
+  brandUrl: string;
   content: string;
+  competitors: string[];
 }
 
 interface RecommendationsPromptParams {
   brand: string;
   role: string;
-  category: string;
-  visibilityRate: number;
-  gapQueries: string[];
-  geoScore: number | null;
+  brandUrl: string;
+  competitors: string[];
+  geoScore: number;
   geoTopIssues: string[];
 }
 
 export function competitorsPrompt({
   brand,
-  category,
+  brandUrl,
 }: CompetitorsPromptParams): { system: string; user: string } {
   return {
-    system: `You are a market research analyst. Return ONLY a JSON array of the 5 most prominent competitor brands to ${brand} in the ${category} category. No markdown.`,
-    user: `Return a JSON array of 5 competitor brand names for ${brand} in ${category}.`,
-  };
-}
-
-export function queriesPrompt({
-  category,
-}: QueriesPromptParams): { system: string; user: string } {
-  return {
-    system: "Return ONLY a JSON array of 10 strings. No markdown.",
-    user: `Generate 10 realistic, varied consumer queries someone would type into an AI chatbot to discover ${category}. Cover: general recommendations, specific needs (budget, use case), comparisons, expert-level, beginner-level. Return a JSON array of 10 query strings.`,
-  };
-}
-
-export function queryPrompt({
-  query,
-  category,
-}: QueryPromptParams): { system: string; user: string } {
-  return {
-    system: `You are a helpful assistant answering consumer questions about ${category}. Give natural, practical recommendations and mention specific brands where relevant.`,
-    user: query,
+    system: `You are a market research analyst. Return ONLY a JSON array of the 5 most prominent competitor brands to ${brand} (website: ${brandUrl}). No markdown.`,
+    user: `Return a JSON array of 5 competitor brand names for ${brand} at ${brandUrl}.`,
   };
 }
 
 export function geoAuditPrompt({
   brand,
-  category,
+  brandUrl,
   content,
+  competitors,
 }: GeoAuditPromptParams): { system: string; user: string } {
+  const competitorContext =
+    competitors.length > 0
+      ? `Key competitors: ${competitors.join(", ")}. Consider how this content positions ${brand} relative to them.`
+      : "";
+
   return {
     system:
       "You are a GEO (Generative Engine Optimization) analyst. You score brand content against criteria proven to improve visibility in AI-generated recommendations, based on academic research (Princeton GEO paper, KDD 2024). Return ONLY valid JSON, no markdown.",
-    user: `Analyse this content for the brand "${brand}" in the "${category}" category.
+    user: `Analyse this content for the brand "${brand}" (website: ${brandUrl}).
+${competitorContext}
 
 Score it on five criteria (0–20 each):
 1. Statistics & Data — specific numbers, percentages, quantitative claims
 2. Citations & Sources — references to third-party sources, reviews, studies, endorsements
 3. Attribute Clarity — explicit differentiators, price positioning, use cases, target customer
 4. Fluency & Structure — clear, well-structured, easy for AI systems to parse
-5. Query Alignment — directly answers common consumer questions about ${category}
+5. Query Alignment — directly answers common consumer questions about the brand and its products
 
 Return this exact JSON:
 {
@@ -102,36 +80,19 @@ ${content}`,
 
 export function recommendationsPrompt({
   brand,
-  role,
-  category,
-  visibilityRate,
-  gapQueries,
+  brandUrl,
+  competitors,
   geoScore,
   geoTopIssues,
 }: RecommendationsPromptParams): { system: string; user: string } {
-  const geoScoreText =
-    geoScore !== null ? `${geoScore}/100` : "not available (no content provided)";
+  const competitorText =
+    competitors.length > 0 ? competitors.join(", ") : "none identified";
   const geoIssuesText =
     geoTopIssues.length > 0 ? geoTopIssues.join(", ") : "none identified";
 
   return {
     system:
       "You are a senior digital marketing strategist specialising in AI/GEO optimisation. Return ONLY a JSON array, no markdown.",
-    user: `Generate 5 specific, actionable recommendations for a ${role} at ${brand} to improve their AI chatbot visibility in the ${category} category. AI visibility is currently ${visibilityRate}%. Missing from ${gapQueries.length} queries: ${gapQueries.join(", ") || "none"}. GEO content score is ${geoScoreText} with issues: ${geoIssuesText}. Each recommendation needs a short title and 2 concrete sentences. Return: [{"title": string, "action": string}]`,
+    user: `Generate 5 specific, actionable recommendations for an external AI/GEO consultant auditing ${brand}'s online content positioning (website: ${brandUrl}). Key competitors: ${competitorText}. GEO content score is ${geoScore}/100 with issues: ${geoIssuesText}. Focus on content changes that improve how AI systems understand, cite, and recommend the brand. Each recommendation needs a short title and 2 concrete sentences. Return: [{"title": string, "action": string}]`,
   };
-}
-
-export function defaultQueries(category: string): string[] {
-  return [
-    `best ${category}`,
-    `top rated ${category}`,
-    `most popular ${category} brands`,
-    `${category} comparison`,
-    `best value ${category}`,
-    `${category} for beginners`,
-    `premium ${category}`,
-    `${category} recommendations`,
-    `which ${category} should I buy`,
-    `${category} pros and cons`,
-  ];
 }

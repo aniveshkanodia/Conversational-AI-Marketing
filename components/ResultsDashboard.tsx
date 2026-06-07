@@ -2,15 +2,12 @@
 
 import type { AnalysisResults } from "@/lib/types";
 import {
-  computeGapCount,
-  computeMetrics,
-  metricColor,
+  countWeakCriteria,
+  geoScoreColor,
+  weakestCriterion,
 } from "@/lib/utils";
-import { AssociationsSection } from "./sections/AssociationsSection";
-import { GapsSection } from "./sections/GapsSection";
 import { GeoAuditSection } from "./sections/GeoAuditSection";
 import { RecommendationsSection } from "./sections/RecommendationsSection";
-import { VisibilitySection } from "./sections/VisibilitySection";
 
 interface ResultsDashboardProps {
   results: AnalysisResults;
@@ -18,23 +15,14 @@ interface ResultsDashboardProps {
   onNewReport: () => void;
 }
 
-const CHANNEL_LABELS = {
-  ai: "AI Chatbots",
-  social: "Social Media",
-  search: "Search / SEO",
-} as const;
-
 export function ResultsDashboard({
   results,
   recommendationsLoading,
   onNewReport,
 }: ResultsDashboardProps) {
-  const metrics = computeMetrics(results.queries, results.brief.brand);
-  const gapCount = computeGapCount(
-    results.queries,
-    results.brief.brand,
-    results.competitors,
-  );
+  const { geoAudit } = results;
+  const weakCount = countWeakCriteria(geoAudit.criteria);
+  const weakest = weakestCriterion(geoAudit.criteria);
 
   const formattedDate = new Date(results.runAt).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -47,11 +35,18 @@ export function ResultsDashboard({
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">
-            Positioning Report
+            GEO Positioning Report
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            {results.brief.brand} · {results.brief.category} ·{" "}
-            {CHANNEL_LABELS[results.brief.channel]} · {results.brief.role}
+            {results.brief.brand} ·{" "}
+            <a
+              href={results.brief.brandUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-600 underline hover:text-slate-900"
+            >
+              {results.brief.brandUrl}
+            </a>
           </p>
         </div>
         <button
@@ -65,12 +60,8 @@ export function ResultsDashboard({
 
       <div className="mb-6 flex flex-wrap gap-x-6 gap-y-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
         <span>
-          <strong className="text-slate-800">Competitors tracked:</strong>{" "}
+          <strong className="text-slate-800">Competitors:</strong>{" "}
           {results.competitors.join(", ")}
-        </span>
-        <span>
-          <strong className="text-slate-800">Queries run:</strong>{" "}
-          {results.queries.length}
         </span>
         <span>
           <strong className="text-slate-800">Date:</strong> {formattedDate}
@@ -79,43 +70,31 @@ export function ResultsDashboard({
 
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <MetricCard
-          label="AI Visibility Rate"
-          value={`${metrics.visibilityRate}%`}
-          colorClass={metricColor("visibility", metrics.visibilityRate)}
+          label="GEO Readiness Score"
+          value={String(geoAudit.overall)}
+          colorClass={geoScoreColor(geoAudit.overall)}
         />
         <MetricCard
-          label="Average Position"
-          value={
-            metrics.averagePosition !== null
-              ? String(metrics.averagePosition)
-              : "—"
-          }
+          label="Criteria below 12/20"
+          value={String(weakCount)}
           colorClass={
-            metrics.averagePosition !== null
-              ? metricColor("position", metrics.averagePosition)
-              : "text-slate-500"
+            weakCount === 0
+              ? "text-emerald-600"
+              : weakCount <= 2
+                ? "text-amber-600"
+                : "text-red-600"
           }
         />
         <MetricCard
-          label="Competitive Gaps"
-          value={String(gapCount)}
-          colorClass={metricColor("gaps", gapCount)}
+          label="Weakest criterion"
+          value={weakest ? `${weakest.score}/20` : "—"}
+          subtitle={weakest?.name}
+          colorClass={weakest ? geoScoreColor(weakest.score * 5) : "text-slate-500"}
         />
       </div>
 
       <div className="space-y-6">
-        <VisibilitySection
-          brief={results.brief}
-          queries={results.queries}
-          competitors={results.competitors}
-        />
-        <AssociationsSection brief={results.brief} queries={results.queries} />
-        <GapsSection
-          brief={results.brief}
-          queries={results.queries}
-          competitors={results.competitors}
-        />
-        <GeoAuditSection brief={results.brief} geoAudit={results.geoAudit} />
+        <GeoAuditSection geoAudit={results.geoAudit} />
         <RecommendationsSection
           recommendations={results.recommendations}
           loading={recommendationsLoading}
@@ -128,16 +107,21 @@ export function ResultsDashboard({
 function MetricCard({
   label,
   value,
+  subtitle,
   colorClass,
 }: {
   label: string;
   value: string;
+  subtitle?: string;
   colorClass: string;
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
       <p className="text-sm text-slate-600">{label}</p>
       <p className={`mt-2 text-3xl font-bold ${colorClass}`}>{value}</p>
+      {subtitle ? (
+        <p className="mt-1 text-xs text-slate-500">{subtitle}</p>
+      ) : null}
     </div>
   );
 }
