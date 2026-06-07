@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: June 7, 2026
+Last updated: June 7, 2026 (late evening)
 
 ## Completed
 
@@ -19,8 +19,9 @@ Last updated: June 7, 2026
 - [x] 12. ResultsDashboard.tsx — wrapper + GEO metric cards + brief bar
 - [x] 13. app/page.tsx — main state orchestration, view switching
 - [x] 14. README.md — setup, deploy, architecture
-- [x] project-notes.md — Phase 1 Ollama / Phase 2 Anthropic deployment plan
-- [x] Pivot to GEO-first audit — removed visibility/query loop, updated spec.md and AGENTS.md
+- [x] docs/project-notes.md — Phase 1 Ollama / Phase 2 Anthropic deployment plan
+- [x] Pivot to GEO-first audit — removed visibility/query loop, updated docs/spec.md and AGENTS.md
+- [x] Repo organisation — moved spec, progress, and project-notes into `docs/`
 
 ## In Progress
 
@@ -34,3 +35,6 @@ _(none)_
 
 - [ ] End-to-end smoke test with Ollama running locally
 - [ ] Phase 2: Vercel deploy with `LLM_PROVIDER=anthropic`
+- [ ] Audit voice guidelines
+- [ ] Brainstorm how to inject context to surface legit recommendations — maybe based on Umbrex brand/marketing frameworks
+- [ ] How to provide recommendations for each page in website map

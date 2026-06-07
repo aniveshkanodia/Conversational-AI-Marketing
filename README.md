@@ -62,7 +62,7 @@ ANTHROPIC_MODEL=claude-sonnet-4-20250514
 - **Analysis flow** — competitors → GEO audit → async recommendations
 - **Competitors** — auto-detected via `/api/competitors` when not provided
 
-See `project-notes.md` for deployment and UX decisions.
+See [docs/](./docs/) for the full spec, progress log, and deployment notes.
 
 ## Research grounding
 

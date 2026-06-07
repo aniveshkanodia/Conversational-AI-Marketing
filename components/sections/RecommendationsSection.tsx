@@ -13,9 +13,6 @@ export function RecommendationsSection({
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       <div className="border-b border-slate-800 bg-slate-900 px-6 py-4 text-white">
         <h3 className="text-lg font-semibold">🎯 Recommendations</h3>
-        <p className="mt-1 text-sm text-slate-400">
-          Actionable findings from an external AI/GEO audit.
-        </p>
       </div>
 
       <div className="p-6">

@@ -62,8 +62,15 @@ ai-brand-positioning/
 │   ├── prompts.ts                  # All LLM prompt templates
 │   ├── utils.ts                    # JSON parsing, GEO score helpers
 │   └── llm.ts                      # Ollama / Anthropic provider switch
+├── docs/
+│   ├── spec.md                     # MVP spec (this file)
+│   ├── progress.md                 # Build progress log
+│   └── project-notes.md            # Deployment and UX decisions
+├── references/
+│   └── Generative Engine Optimization.pdf
 ├── .env.local
 ├── .env.example
+├── AGENTS.md                       # AI agent instructions
 ├── next.config.ts
 ├── tailwind.config.ts
 ├── tsconfig.json

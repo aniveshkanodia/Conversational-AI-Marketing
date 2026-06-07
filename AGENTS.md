@@ -10,8 +10,8 @@ A Next.js web app that audits how well a brand's online content is structured fo
 
 This is the **content optimisation layer**, not AI visibility monitoring. Competitor auto-detect provides competitive context for the audit; there is no synthetic query loop or visibility metrics.
 
-**Source of truth for all feature decisions:** `spec.md`  
-**Track all work in:** `progress.md` (format defined below)
+**Source of truth for all feature decisions:** `docs/spec.md`  
+**Track all work in:** `docs/progress.md` (format defined below)
 
 ---
 
@@ -32,7 +32,7 @@ No `any` types. All shared types live in `lib/types.ts`. API routes and componen
 **5. All prompts in `lib/prompts.ts`.**  
 No prompt strings hardcoded inside route files. Every system prompt and user prompt is an exported function in `lib/prompts.ts`. Route files call the function and pass the result to the API. This makes prompt iteration fast without touching route logic.
 
-**6. Follow the file structure in spec.md exactly.**  
+**6. Follow the file structure in `docs/spec.md` exactly.**  
 Do not invent new directories or move files to different locations than specified. The structure exists for a reason and the spec is the contract.
 
 **7. Product content is required.**  
@@ -61,13 +61,13 @@ Work in this sequence. Do not skip ahead — later components depend on earlier 
 14. README.md                product brief, setup, deploy, architecture
 ```
 
-Update `progress.md` after completing each numbered item.
+Update `docs/progress.md` after completing each numbered item.
 
 ---
 
 ## Progress Tracking
 
-Maintain `progress.md` in the project root throughout the build. Update it whenever you complete a task, start a task, or hit a blocker. Do not wait until the end of a session to update it.
+Maintain `docs/progress.md` throughout the build. Update it whenever you complete a task, start a task, or hit a blocker. Do not wait until the end of a session to update it.
 
 ### Format
 
