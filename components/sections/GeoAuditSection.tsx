@@ -14,12 +14,7 @@ export function GeoAuditSection({ geoAudit }: GeoAuditSectionProps) {
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       <div className="border-b border-slate-800 bg-slate-900 px-6 py-4 text-white">
-        <h3 className="text-lg font-semibold">📊 GEO Content Audit</h3>
-        <p className="mt-1 text-xs text-slate-400">
-          Based on Princeton GEO research (KDD &apos;24) — content optimised with
-          these signals shows up to 40% higher visibility in AI-generated
-          responses.
-        </p>
+        <h3 className="text-lg font-semibold">Content Audit</h3>
       </div>
 
       <div className="grid gap-8 p-6 lg:grid-cols-[240px_1fr]">

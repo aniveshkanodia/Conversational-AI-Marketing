@@ -45,8 +45,8 @@ export function LoadingScreen({ brief, analysisState }: LoadingScreenProps) {
       </div>
 
       <p className="mt-8 text-sm text-slate-500">
-        Scoring your content against Princeton GEO research criteria — the
-        signals that help AI systems understand, cite, and recommend your brand.
+        Scoring your content to evaluate the signal that help AI systems
+        understand, cite, and recommend your brand.
       </p>
     </div>
   );
